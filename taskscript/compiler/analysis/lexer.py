@@ -104,6 +104,8 @@ class Lexer(object):
             argument += self.currentChar()
             self.index += 1
 
+        self.index += 1
+
         return Token(
             value = argument,
             type = TokenTypes.ARGUMENT
