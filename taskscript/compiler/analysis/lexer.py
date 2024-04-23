@@ -18,8 +18,8 @@ class Lexer(object):
                 type = TokenTypes.INT
             ),
             "float": Token(
-                value = TokenTypes.ASSIGN.name,
-                type = TokenTypes.ASSIGN
+                value = TokenTypes.FLOAT.name,
+                type = TokenTypes.FLOAT
             ),
             "call": Token(
                 value = TokenTypes.CALL.name,
