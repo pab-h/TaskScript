@@ -1,6 +1,8 @@
 from enum import Enum
 from enum import auto
 
+from typing import Union
+
 class TokenError(Exception):
     pass
 
@@ -26,7 +28,7 @@ class TokenTypes(Enum):
     CHOICE = auto()
 
 class Token(object):
-    def __init__(self, value: str, type: TokenTypes) -> None:
+    def __init__(self, value: Union[str, int, float], type: TokenTypes) -> None:
         self.value = value
         self.type = type
 
