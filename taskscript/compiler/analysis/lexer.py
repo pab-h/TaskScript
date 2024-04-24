@@ -83,6 +83,10 @@ class Lexer(object):
     def number(self) -> Token:
         number = ""
 
+        if self.currentChar() == "-":
+            number += self.currentChar()
+            self.index += 1
+
         while self.hasNext() and self.currentChar().isdigit():
             number += self.currentChar()
             self.index += 1
@@ -129,14 +133,7 @@ class Lexer(object):
             return self.number()
 
         if self.currentChar() == "-":
-            token = Token(
-                value = self.currentChar(),
-                type = TokenTypes.MINUS
-            )
-
-            self.index += 1
-
-            return token
+            return self.number()
 
         if self.currentChar() == "[":
             token = Token(

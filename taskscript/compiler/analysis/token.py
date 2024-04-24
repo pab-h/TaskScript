@@ -20,7 +20,6 @@ class TokenTypes(Enum):
     COLON = auto()
     OPENBRACKET = auto()
     CLOSEBRACKET = auto()
-    MINUS = auto()
     NUMBER = auto()
     COMMA = auto()
     ARGUMENT = auto()
