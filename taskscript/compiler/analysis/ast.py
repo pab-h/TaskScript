@@ -72,7 +72,7 @@ class FromNode(ValueNode):
         self.argument = argument
 
 class CheckerNode(AST):
-    def __init__(self, argument: ArgumentNode) -> None:
+    def __init__(self, argument: Token) -> None:
         super().__init__(ASTTypes.CHECKER)
 
         self.argument = argument
