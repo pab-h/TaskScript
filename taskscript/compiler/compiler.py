@@ -1,14 +1,11 @@
 import random 
 import subprocess
 
+from os import remove
 from uuid import uuid4 as uuid
-
 from pathlib import Path
-
-from pdflatex import PDFLaTeX
-
 from typing import Union
-from typing import Optional
+from tempfile import NamedTemporaryFile
 
 from taskscript.compiler.analysis.parser import Parser
 from taskscript.compiler.analysis.ast import *
@@ -18,7 +15,9 @@ class Compiler(object):
         self.parser = Parser()
         self.variables = {}
         self.pdfContent = ""
-        self.templateFile: Optional[str] = None
+        self.ctaskContent = ""
+        self.templateFilename = f"{ uuid() }.tex"
+        self.targetFilename = ""
 
     def visitProgram(self, node: ProgramNode) -> None:
         self.visit(node.vars)
@@ -26,14 +25,19 @@ class Compiler(object):
         self.visit(node.checker)
 
     def visitVars(self, node: VarsNode) -> None:
+        self.ctaskContent += "vars:\n"
+
         for variable in node.variables:
-            self.visit(variable)
+            self.ctaskContent += self.visit(variable)
 
     def visitVariable(self, node: VariableNode) -> None:
         variableName = node.identifier.value 
+        variableValue = self.visit(node.value)
         self.variables.update({
-            variableName: self.visit(node.value)
+            variableName: variableValue
         })
+
+        return f"   { variableName } := { variableValue }\n"
 
     def visitInt(self, node: IntNode) -> int:
         maxValue = int(self.visit(node.max))
@@ -87,20 +91,30 @@ class Compiler(object):
 
     def visitTask(self, node: TaskNode):
         inputText = self.visit(node.valueNode)
+      
         outputText = self.replaceVariables(inputText)
-
         self.pdfContent = outputText
+
+        self.ctaskContent += "task: "
+
+        valueNode = node.valueNode
+        if valueNode.type == ASTTypes.ARGUMENT:
+            self.ctaskContent += f"\"{ inputText }\""
+
+        self.ctaskContent += "\n"
 
     def visitFrom(self, node: FromNode):
         filename = node.argument.value
+        self.templateFilename = filename
 
-        self.templateFile = Path(filename).stem
+        self.ctaskContent += f"from \"{ filename }\"\n"
 
         with open(filename) as file:
             return file.read()
         
     def visitChecker(self, node: CheckerNode):
-        pass
+        checkerFilename = node.argument.value
+        self.ctaskContent += f"checker: \"{ checkerFilename }\""
 
     def visit(self, node: AST) -> Union[None, str, int, float]:
         if node.type == ASTTypes.PROGRAM:
@@ -149,29 +163,54 @@ class Compiler(object):
         return text
 
     def createPdf(self) -> str:
-        pdfContent = bytes(
-            self.pdfContent, 
-            encoding="utf-8"
-        )
+        tmpLatexPath = ""
 
-        if not self.templateFile:
-            self.templateFile = uuid()
+        with NamedTemporaryFile(mode = "w", delete = False) as file:
+            file.write(self.pdfContent)
 
-        pdfLatex = PDFLaTeX.from_binarystring(
-            binstr = pdfContent, 
-            jobname = self.templateFile
-        )
+            tmpLatexPath = file.name
 
-        pdfLatex.create_pdf(
-            keep_pdf_file = True
-        )
+            print(file.name)
 
-        return self.templateFile + ".pdf"
+        jobname = Path(self.templateFilename).stem
+        jobname += f"-{ uuid() }"
 
-    def compile(self, text: str) -> list[str]:
-        ast = self.parser.parse(text)
+        subprocess.run([
+            'pdflatex',
+            "-jobname",
+            jobname,
+            tmpLatexPath
+        ])
+
+        remove(tmpLatexPath)
+        remove(f"{ jobname }.log")
+        remove(f"{ jobname }.aux")
+
+        return jobname
+
+
+    def createCTask(self) -> str:
+        cTaskFilename = Path(self.targetFilename).stem
+        cTaskFilename += f"-{ uuid() }"
+        cTaskFilename += ".ctask"
+
+        with open(cTaskFilename, "w+") as file:
+            file.write(self.ctaskContent)
+
+        return cTaskFilename
+
+    def build(self, code: str) -> None:
+        ast = self.parser.parse(code)
         self.visit(ast)
 
+    def compile(self, filename: str) -> list[str]:
+        with open(filename) as file:
+            self.build(file.read())
+
+        self.targetFilename = filename
+
         return [
-            self.createPdf()
+            self.createPdf(),
+            self.createCTask()
         ]
+        
