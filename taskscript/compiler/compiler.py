@@ -90,18 +90,16 @@ class Compiler(object):
         return returned
 
     def visitTask(self, node: TaskNode):
+        self.ctaskContent += "task: "
+
         inputText = self.visit(node.valueNode)
       
         outputText = self.replaceVariables(inputText)
         self.pdfContent = outputText
 
-        self.ctaskContent += "task: "
-
         valueNode = node.valueNode
         if valueNode.type == ASTTypes.ARGUMENT:
             self.ctaskContent += f"\"{ inputText }\""
-
-        self.ctaskContent += "\n"
 
     def visitFrom(self, node: FromNode):
         filename = node.argument.value
@@ -170,28 +168,24 @@ class Compiler(object):
 
             tmpLatexPath = file.name
 
-            print(file.name)
-
         jobname = Path(self.templateFilename).stem
-        jobname += f"-{ uuid() }"
 
         subprocess.run([
             'pdflatex',
             "-jobname",
             jobname,
-            tmpLatexPath
-        ])
+            tmpLatexPath,
+        ], stdout = subprocess.DEVNULL)
 
         remove(tmpLatexPath)
         remove(f"{ jobname }.log")
         remove(f"{ jobname }.aux")
 
-        return jobname
+        return jobname + ".pdf"
 
 
     def createCTask(self) -> str:
         cTaskFilename = Path(self.targetFilename).stem
-        cTaskFilename += f"-{ uuid() }"
         cTaskFilename += ".ctask"
 
         with open(cTaskFilename, "w+") as file:
