@@ -11,6 +11,8 @@ Para usar corretamente, é necessário utilizar o [poetry](https://python-poetry
 1. Na pasta do projeto, 
 `poetry run start`
 
+É necessário ter instalado o [pdflatex](https://www.math.rug.nl/~trentelman/jacob/pdflatex/pdflatex.html)
+
 # The sintaxe
 
 ```js
@@ -86,10 +88,14 @@ O camando `correct` corrige a tarefa compilada. Para isso é necessário passar 
 Exemplo: 
 
 ```bash
-compile calculo.task
-correct calculo.ctask -123
+compile calculo.task // calculo.ctask calculo.pdf
+correct calculo.ctask -123 // False
+correct calculo.ctask 10 // True
 ```
 
 # Disclaimer
 
 Esse projeto é somente uma prova de conceito. Certamente, não está em sua melhor forma. Caso queira, sinta-se a vontade para expandir a ideia.
+Consequentemente, há algumas limitações:
+1. Só é possível escrever tarefas usando o latex
+1. Só é possível executar programas escritos em python
