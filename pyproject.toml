@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "taskscript"
-version = "0.1.0"
+version = "1.0.0"
 description = ""
 authors = ["pab-h <dev.pab.2020@gmail.com>"]
 readme = "README.md"
